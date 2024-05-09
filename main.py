@@ -3,7 +3,7 @@ from configparser import ConfigParser
 from tkinter import *
 from PIL import Image
 Image.CUBIC = Image.BICUBIC
-from tkcalendar import *                                        
+from tkcalendar import *
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from windowassets import Header
@@ -13,6 +13,7 @@ from windowassets import Header, AssignedMeter
 from ttkbootstrap import StringVar, IntVar
 from serverconfig import *
 from SQLconnection import *
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 
 
@@ -90,6 +91,7 @@ class MainApp(tb.Window):
             self.start_main()
 
    def show_config_window(self):
+      self.iconify()
       self.config_win = tb.Toplevel(self)
       self.dbframes = {}
 
@@ -127,14 +129,27 @@ class MainApp(tb.Window):
       # raises the current frame to the top
       frame.tkraise()
 
-   def checkConection(self):
-      self.after(1200000, self.checkConnection)
-      if not self.cnxn.cursor():
+   def check_connection(self):
+      self.after(1200000, self.check_connection)
+      try:
+        # db.session.execute('SELECT 1')
+        self.session.execute(text('SELECT 1'))
+      except Exception as e:
          popup = messagebox.askyesno(message='Connection has timed out. Reconnect?')
          if popup == True:
             self.show_config_window()
          else:
             app.destroy()
+   
+   def update_meters(self):
+      try:
+         self.total_meter.update()
+         self.es_meter.update()
+         self.ms_meter.update()
+         self.hs_meter.update()
+         self.after(5000, self.update_meters)
+      except:
+         messagebox.showerror(message='Unable to update meters')
 
    def start_main(self, var=None, index=None, mode=None):
       self.overall_mtr.destroy()
@@ -156,11 +171,12 @@ class MainApp(tb.Window):
          frame.grid(row=0, column=0, sticky="nsew") 
 
       self.show_frame(MainMenu)
+      self.config_win.destroy()
       self.deiconify()
       
-      self.home_btn = tb.Button(self.left_container, text='Home', command=lambda: self.show_frame(MainMenu), bootstyle='secondary-outline')
-      self.search_btn = tb.Button(self.left_container, text='Search', command=lambda: self.show_frame(SearchPage), bootstyle='secondary-outline')
-      self.settings_btn = tb.Button(self.left_container, text='Settings', command=lambda: self.show_frame(SettingsPage), bootstyle='secondary-outline')
+      self.home_btn = tb.Button(self.left_container, text='Home', command=lambda: self.show_frame(MainMenu), bootstyle='light-outline', width=20)
+      self.search_btn = tb.Button(self.left_container, text='Chromebooks', command=lambda: self.show_frame(SearchPage), bootstyle='light-outline', width=20)
+      self.settings_btn = tb.Button(self.left_container, text='Settings', command=lambda: self.show_frame(SettingsPage), bootstyle='light-outline', width=20)
 
       self.home_btn.pack(fill=tb.X)
       self.search_btn.pack(fill=tb.X)
@@ -176,45 +192,8 @@ class MainApp(tb.Window):
       self.ms_meter.pack()
       self.es_meter.pack()
 
-      # self.all_devs = all_devices(self.cnxn)
-      # self.avl_devs = avl_devices(self.cnxn)
-
-      # def total_count():
-      #    devices = 0
-      #    for i in self.all_devs:
-      #       devices = devices + 1
-      #    return devices
-      # self.district_wide_devices = total_count()
-
-      # def total_available():
-      #    devices = 0
-      #    for i in self.avl_devs:
-      #       devices = devices + 1
-      #    ad= self.district_wide_devices - devices
-      #    return ad
-      # self.district_avl_devices = total_available()
-
-      # self.hs_avl = all_avl_school_devices('HS', self.cnxn)
-      # self.hs_total = all_school_devices('HS', self.cnxn)
-      # self.hs_assigned = self.hs_total - self.hs_avl
-
-      # self.ms_avl = all_avl_school_devices('MS', self.cnxn)
-      # self.ms_total = all_school_devices('MS', self.cnxn)
-      # self.ms_assigned = self.ms_total - self.ms_avl
-
-      # self.es_avl = all_avl_school_devices('ES', self.cnxn)
-      # self.es_total = all_school_devices('ES', self.cnxn)
-      # self.es_assigned = self.es_total - self.es_avl   
-
-      # overall_mtr = tb.Meter(self.right_container, metersize=150, padding=5, amountused=self.district_avl_devices, amounttotal=self.district_wide_devices, metertype='semi', subtext='Assigned', textright='of ' + str(self.district_wide_devices), bootstyle='danger')
-      # hs_mtr = tb.Meter(self.right_container, metersize=150, padding=5, amountused= self.hs_assigned, amounttotal=self.hs_total, metertype='semi', subtext='HS Assigned', textright = 'of ' +str(self.hs_total), bootstyle='danger')
-      # ms_mtr = tb.Meter(self.right_container, metersize=150, padding=5, amountused= self.ms_assigned, amounttotal=self.ms_total, metertype='semi', subtext='MS Assigned', textright = 'of ' +str(self.ms_total), bootstyle='danger')
-      # es_mtr = tb.Meter(self.right_container, metersize=150, padding=5, amountused= self.es_assigned, amounttotal=self.es_total, metertype='semi', subtext='ES Assigned', textright = 'of ' +str(self.es_total), bootstyle='danger')
-
-      # overall_mtr.pack()
-      # hs_mtr.pack()
-      # ms_mtr.pack()
-      # es_mtr.pack()
+      self.check_connection()
+      self.update_meters()
 
 if __name__ == "__main__":
 

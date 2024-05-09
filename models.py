@@ -1,32 +1,11 @@
 from typing import List
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.mssql import TEXT, BIT
 import datetime
 from SQLconnection import *
 
 Base = declarative_base()
-
-# class User(Base):
-#     __tablename__ = 'users'
-
-#     uid = Column(Integer, primary_key=True)
-#     username = Column(String(50), unique=True, nullable=False)
-#     email = Column(String(100), unique=True, nullable=False)
-#     password = Column(String(100), unique=True, nullable=False)
-#     first_login = Column(String(1), nullable=False, default=0)
-#     sec_question1 = Column(String(50))
-#     sec_question2 = Column(String(50))
-#     created_at = Column(DateTime, default=datetime.datetime.now)
-
-#     def __init__(self, id, username, email, password):
-#         self.id = id
-#         self.username = username
-#         self.email = email
-#         self.password = password
-    
-#     def __repr__(self):
-#         f'({self.id}) {self.username} {self.email} {self.password}'
 
 class Chromebook(Base):
     __tablename__ = 'chromebooks'
@@ -37,16 +16,22 @@ class Chromebook(Base):
     asset_tag = Column('asset_tag', String(50))
     model = Column('model', String(50))
     status = Column('status', String(50))
+    condition = Column('condition', String(50))
+    con_date = Column('con_date', Date)
+    damage_notes = Column('damage_notes', TEXT)
 
-    def __init__(self, device_sn, building, asset_tag, model, status):
+    def __init__(self, device_sn, building, asset_tag, model, status, condition, con_date, damage_notes):
         self.device_sn = device_sn
         self.building = building
         self.asset_tag = asset_tag
         self.model = model
         self.status = status
+        self.condition = condition
+        self.con_date = con_date
+        self.damage_notes = damage_notes
 
     def __repr__(self):
-        f'({self.device_sn}) {self.building} {self.asset_tag} {self.model} {self.status}'
+        f'({self.device_sn}) {self.building} {self.asset_tag} {self.model} {self.status} {self.condition} {self.con_date} {self.damage_notes}'
 
 class Customer(Base):
     __tablename__ = 'customers'
@@ -77,15 +62,12 @@ class Fact(Base):
     email = Column('email', String, nullable=False)
     device_sn: Mapped[str] = mapped_column('device_sn', String(50), ForeignKey('chromebooks.device_sn'), primary_key=True, autoincrement=False)
     asset_tag = Column('asset_tag', String)
-    date_issued = Column('date_issued', DateTime)
+    date_issued = Column('date_issued', Date)
     returned = Column('returned', BIT)
-    returned_date = Column('returned_date', DateTime)
+    returned_date = Column('returned_date', Date)
     loaner = Column('loaner', Integer)
     loaner_sn = Column('loaner_sn', String)
-    loaner_issue_date = Column('loaner_issue_date', DateTime)
-    loaner_returned_date = Column('loaner_returned_date', DateTime)
-    damage_notes = Column('damage_notes', TEXT)
-    tech_notes = Column('tech_notes', TEXT)
+    loaner_issue_date = Column('loaner_issue_date', Date)
 
     def __init__(self,
                  customer_id, 
@@ -97,11 +79,8 @@ class Fact(Base):
                  returned_date=None, 
                  loaner=None, 
                  loaner_sn=None, 
-                 loaner_issue_date=None, 
-                 loaner_returned_date=None, 
-                 damage_notes=None, 
-                 tech_notes=None, 
-                 to_tech=None):
+                 loaner_issue_date=None,
+                 ):
         
         self.customer_id = customer_id
         self.email = email
@@ -113,23 +92,20 @@ class Fact(Base):
         self.loaner = loaner
         self.loaner_sn = loaner_sn
         self.loaner_issue_date = loaner_issue_date
-        self.loaner_returned_date = loaner_returned_date
-        self.damage_notes = damage_notes
-        self.tech_notes = tech_notes
-        self.to_tech = to_tech
     
     def __repr__(self):
-        f'({self.device_sn}) {self.email} {self.customer_id} {self.asset_tag} {self.date_issued} {self.returned} {self.returned_date} {self.loaner} {self.loaner_sn} {self.loaner_issue_date} {self.loaner_returned_date} {self.damage_notes} {self.tech_notes} {self.to_tech}'
+        f'({self.device_sn}) {self.email} {self.customer_id} {self.asset_tag} {self.date_issued} {self.returned} {self.returned_date} {self.loaner} {self.loaner_sn} {self.loaner_issue_date}'
 
 class History(Base):
     __tablename__ = 'history'
 
-    customer_id = Column(Integer, primary_key=True, autoincrement=False)
+    transaction_id = Column(Integer, primary_key=True, autoincrement=True)
+    customer_id = Column(Integer)
     email = Column(String)
     device_sn = Column(String)
     asset_tag = Column(String)
-    date_issued = Column(DateTime)
-    returned_date = Column(DateTime)
+    date_issued = Column(Date)
+    returned_date = Column(Date)
     damage_notes = Column(TEXT)
 
     def __init__(self, customer_id, email, deivce_sn, asset_tag, date_issued, returned_date, damage_notes):
@@ -143,3 +119,25 @@ class History(Base):
 
     def __repr__(self):
         f'({self.customer_id}) {self.email} {self.device_sn} {self.asset_tag} {self.date_issued} {self.returned_date} {self.damage_notes}'
+
+class LoanerHistory(Base):
+    __tablename__ = 'loaner_history'
+
+    transaction_id = Column(Integer, primary_key=True, autoincrement=True)
+    customer_id = Column(Integer)
+    email = Column(String)
+    device_sn = Column(String)
+    loaner_issue_date = Column(Date)
+    returned_date = Column(Date)
+    damage_notes = Column(TEXT)
+
+    def __init__(self, customer_id, email, device_sn, loaner_issue_date, loaner_returned_date, damage_notes):
+        self.customer_id = customer_id
+        self.email = email
+        self.device_sn = device_sn
+        self.loaner_issue_date = loaner_issue_date
+        self.loaner_returned_date = loaner_returned_date
+        self.damage_notes = damage_notes
+
+    def __repr__(self):
+        f'({self.customer_id}) {self.email} {self.device_sn} {self.loaner_issue_date} {self.loaner_returned_date} {self.damage_notes}'

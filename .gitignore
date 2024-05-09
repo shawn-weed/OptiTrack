@@ -1,4 +1,4 @@
-config.ini
-hostconfig.ini
-.env
+
+configuration/config.ini
+configuration/hostconfig.ini
 configuration/__pycache__/configuration.cpython-312.pyc

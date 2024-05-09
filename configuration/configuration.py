@@ -1,5 +1,4 @@
 from configparser import ConfigParser
-from serverconfig import ServerConfig
 import os
 
 config = ConfigParser()

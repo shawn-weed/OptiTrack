@@ -7,31 +7,32 @@ from SQLconnection import *
 
 Base = declarative_base()
 
-class User(Base):
-    __tablename__ = 'users'
+# class User(Base):
+#     __tablename__ = 'users'
 
-    uid = Column(Integer, primary_key=True)
-    username = Column(String(50), unique=True, nullable=False)
-    email = Column(String(100), unique=True, nullable=False)
-    password = Column(String(100), unique=True, nullable=False)
-    first_login = Column(String(1), nullable=False, default=0)
-    sec_question1 = Column(String(50))
-    sec_question2 = Column(String(50))
-    created_at = Column(DateTime, default=datetime.datetime.now)
+#     uid = Column(Integer, primary_key=True)
+#     username = Column(String(50), unique=True, nullable=False)
+#     email = Column(String(100), unique=True, nullable=False)
+#     password = Column(String(100), unique=True, nullable=False)
+#     first_login = Column(String(1), nullable=False, default=0)
+#     sec_question1 = Column(String(50))
+#     sec_question2 = Column(String(50))
+#     created_at = Column(DateTime, default=datetime.datetime.now)
 
-    def __init__(self, id, username, email, password):
-        self.id = id
-        self.username = username
-        self.email = email
-        self.password = password
+#     def __init__(self, id, username, email, password):
+#         self.id = id
+#         self.username = username
+#         self.email = email
+#         self.password = password
     
-    def __repr__(self):
-        f'({self.id}) {self.username} {self.email} {self.password}'
+#     def __repr__(self):
+#         f'({self.id}) {self.username} {self.email} {self.password}'
 
 class Chromebook(Base):
     __tablename__ = 'chromebooks'
 
-    device_sn: Mapped[str] = mapped_column('device_sn', ForeignKey('fact.device_sn'), primary_key=True)
+    device_sn: Mapped[str] = mapped_column('device_sn', String(50), primary_key=True, autoincrement=False)
+    children: Mapped[List['Fact',]] = relationship()
     building = Column('building', String(50))
     asset_tag = Column('asset_tag', String(50))
     model = Column('model', String(50))
@@ -48,9 +49,10 @@ class Chromebook(Base):
         f'({self.device_sn}) {self.building} {self.asset_tag} {self.model} {self.status}'
 
 class Customer(Base):
-    __tablename__ = 'customer'
+    __tablename__ = 'customers'
 
-    customer_id: Mapped[int] = mapped_column('customer_id', ForeignKey('fact.customer_id'), primary_key=True)
+    customer_id: Mapped[int] = mapped_column('customer_id', nullable=False, primary_key=True, autoincrement=False)
+    children: Mapped[List['Fact',]] = relationship()
     first_name = Column('first_name', String)
     last_name = Column('last_name', String)
     role_ = Column('role_', String)
@@ -71,11 +73,9 @@ class Customer(Base):
 class Fact(Base):
     __tablename__ = 'fact'
 
-    customer_id: Mapped[int] = mapped_column('customer_id', nullable=False)
-    children: Mapped[List['Customer',]] = relationship()
+    customer_id: Mapped[int] = mapped_column('customer_id', ForeignKey('customers.customer_id'))
     email = Column('email', String, nullable=False)
-    device_sn: Mapped[str] = mapped_column('device_sn', primary_key=True)
-    children: Mapped[List['Chromebook',]] = relationship()
+    device_sn: Mapped[str] = mapped_column('device_sn', String(50), ForeignKey('chromebooks.device_sn'), primary_key=True, autoincrement=False)
     asset_tag = Column('asset_tag', String)
     date_issued = Column('date_issued', DateTime)
     returned = Column('returned', BIT)
@@ -86,23 +86,22 @@ class Fact(Base):
     loaner_returned_date = Column('loaner_returned_date', DateTime)
     damage_notes = Column('damage_notes', TEXT)
     tech_notes = Column('tech_notes', TEXT)
-    to_tech = Column('to_tech', BIT)
 
     def __init__(self,
                  customer_id, 
                  email, 
                  device_sn, 
-                 asset_tag, 
-                 date_issued, 
-                 returned, 
-                 returned_date, 
-                 loaner, 
-                 loaner_sn, 
-                 loaner_issue_date, 
-                 loaner_returned_date, 
-                 damage_notes, 
-                 tech_notes, 
-                 to_tech):
+                 asset_tag=None, 
+                 date_issued=None, 
+                 returned=None, 
+                 returned_date=None, 
+                 loaner=None, 
+                 loaner_sn=None, 
+                 loaner_issue_date=None, 
+                 loaner_returned_date=None, 
+                 damage_notes=None, 
+                 tech_notes=None, 
+                 to_tech=None):
         
         self.customer_id = customer_id
         self.email = email
@@ -122,3 +121,25 @@ class Fact(Base):
     def __repr__(self):
         f'({self.device_sn}) {self.email} {self.customer_id} {self.asset_tag} {self.date_issued} {self.returned} {self.returned_date} {self.loaner} {self.loaner_sn} {self.loaner_issue_date} {self.loaner_returned_date} {self.damage_notes} {self.tech_notes} {self.to_tech}'
 
+class History(Base):
+    __tablename__ = 'history'
+
+    customer_id = Column(Integer, primary_key=True, autoincrement=False)
+    email = Column(String)
+    device_sn = Column(String)
+    asset_tag = Column(String)
+    date_issued = Column(DateTime)
+    returned_date = Column(DateTime)
+    damage_notes = Column(TEXT)
+
+    def __init__(self, customer_id, email, deivce_sn, asset_tag, date_issued, returned_date, damage_notes):
+        self.customer_id = customer_id
+        self.email = email
+        self.device_sn = deivce_sn
+        self.asset_tag = asset_tag
+        self.date_issued = date_issued
+        self.returned_date = returned_date
+        self.damage_notes = damage_notes
+
+    def __repr__(self):
+        f'({self.customer_id}) {self.email} {self.device_sn} {self.asset_tag} {self.date_issued} {self.returned_date} {self.damage_notes}'

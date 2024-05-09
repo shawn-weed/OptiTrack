@@ -93,17 +93,23 @@ class AssignedMeter(tb.Meter):
         total_ass = self.total_assigned(school)
         
         #Variable to contain float to change color of meter for visual represntaion of devices that are assigned
-        avl_percntage = total_ass/total_dev
-
-        if school == None:
-            self.configure(amountused=total_ass, amounttotal=total_dev, subtext='Assigned', textright='of ' + str(total_dev))
+        if total_dev != 0:
+            avl_percentage = total_ass/total_dev
+            if school == None:
+                self.configure(amountused=total_ass, amounttotal=total_dev, subtext='Assigned', textright='of ' + str(total_dev))
+            else:
+                self.configure(amountused=total_ass, amounttotal=total_dev, subtext=f'{school} Assigned', textright='of ' + str(total_dev))
         else:
-            self.configure(amountused=total_ass, amounttotal=total_dev, subtext=f'{school} Assigned', textright='of ' + str(total_dev))
+            avl_percentage = 0
 
-        if avl_percntage >= .9:
+        
+
+        if avl_percentage >= .9:
             self.configure(bootstyle='danger')
-        elif avl_percntage >= .75:
+        elif avl_percentage >= .75:
             self.configure(bootstyle='warning')
+        elif avl_percentage == 0:
+            self.configure(bootstyle='danger')
         else:
             self.configure(bootstyle='success')
 

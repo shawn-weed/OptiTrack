@@ -60,7 +60,7 @@ class MainApp(tb.Window):
       #if a connection has not been establish it will start from here
       try:
          if 'CONNECTION' not in self.config.sections():
-            print(self.config.sections())
+            self.show_config_window()
          #If a connection has been entered before 
          else:
             if self.config['CONNECTION']['software'] == 'mssql': #For using sql server login creds
@@ -84,8 +84,10 @@ class MainApp(tb.Window):
                   self.dbframes[MSSqlConfig].db_ent.insert(0, self.config['CONNECTION']['db'])
                   self.dbframes[MSSqlConfig].db_ent.configure(state='disabled')
       except Exception as e:
-         self.show_config_window()
-         print(e)
+         self.create_popup = messagebox.askquestion(message='No tables found in database.\n Would you like to create them?')
+         if self.create_popup == 'yes':
+            Base.metadata.create_all(self.engine)
+            self.start_main()
 
    def show_config_window(self):
       self.config_win = tb.Toplevel(self)
@@ -107,7 +109,7 @@ class MainApp(tb.Window):
    def get_connection(self, var, index, mode):
       if self.connselect.get() == 1:
          self.validconnection = self.dbframes[MSSqlConfig].validconnection
-         self.validconnection.trace_add('write', lambda x, y, z: [self.set_connection(x, y, z), self. start_main(x, y, z)])
+         self.validconnection.trace_add('write', lambda x, y, z: [self.set_connection(x, y, z), Base.metadata.create_all(self.engine), self.start_main(x, y, z),])
 
    def set_connection(self, var, index, mode):
       if self.connselect.get() == 1:
@@ -145,7 +147,8 @@ class MainApp(tb.Window):
       
       #Puts frames into dictionary
       for F in (MainMenu, 
-               SearchPage, 
+               SearchPage,
+               SettingsPage 
                ):
          frame = F(self.container, self)
             # the MainApp class acts as the root window for the frames.
@@ -155,6 +158,14 @@ class MainApp(tb.Window):
       self.show_frame(MainMenu)
       self.deiconify()
       
+      self.home_btn = tb.Button(self.left_container, text='Home', command=lambda: self.show_frame(MainMenu), bootstyle='secondary-outline')
+      self.search_btn = tb.Button(self.left_container, text='Search', command=lambda: self.show_frame(SearchPage), bootstyle='secondary-outline')
+      self.settings_btn = tb.Button(self.left_container, text='Settings', command=lambda: self.show_frame(SettingsPage), bootstyle='secondary-outline')
+
+      self.home_btn.pack(fill=tb.X)
+      self.search_btn.pack(fill=tb.X)
+      self.settings_btn.pack(fill=tb.X)
+
       self.total_meter = AssignedMeter(self.right_container, self.engine)
       self.hs_meter = AssignedMeter(self.right_container, self.engine, school='HS')
       self.ms_meter = AssignedMeter(self.right_container, self.engine, school='MS')

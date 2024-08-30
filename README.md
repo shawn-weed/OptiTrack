@@ -1,7 +1,4 @@
 # OptiTrack
-Open Source Asset Management
-
-A more simpllified version is currently in use as a proof of concept. This is an open source version with in process feature improvements. *This code is not complete*. The README will be updated when this version of the software is functional.
 
 OptiTrack was originally created as a simple way to manage Chromebooks in a K-12 environment. I am currently moving toward a more general asset management system that is highly configurable. It allows for quick assignment of an asset and the ability to loan a device by attaching to a 'fact' object in case the original device is in need of repair or the user otherwise needs another device.
 
